@@ -1,0 +1,466 @@
+{
+  "name": "TutorBot - Reporte Coordinador (Gmail)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U",
+          "mode": "list",
+          "cachedResultName": "TUTORIAS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit#gid=0"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "id": "2959a299-3742-4c14-8873-f54d65903ee8",
+      "name": "Nueva tutoria agendada",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        976,
+        48
+      ],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "MoWnnjxiEhAh7AtQ",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "10Z6gE3p1SgCGNWmcfY6meqgbQca4B6PnIEuI4bGp3Jg",
+          "mode": "list",
+          "cachedResultName": "ESTUDIANTES"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_estudiante",
+              "lookupValue": "={{ $json.id_estudiante }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d39ffc94-4896-42d2-aab4-0066a0dc8a53",
+      "name": "Buscar datos estudiante",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1216,
+        48
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1xFylgAtPyqiMWjmqL89tIAlFAfybAgAOtEwrW2muy6Q",
+          "mode": "list",
+          "cachedResultName": "TUTORES"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_tutor",
+              "lookupValue": "={{ $('Nueva tutoria agendada').item.json.id_tutor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b751c16a-dcd7-42cb-b570-2cf70765de2c",
+      "name": "Buscar datos tutor",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1456,
+        48
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tutoria = $('Nueva tutoria agendada').first().json;\nconst estItems = $('Buscar datos estudiante').all();\nconst tutItems = $('Buscar datos tutor').all();\n\nconst est = estItems.length ? estItems[0].json : {};\nconst tut = tutItems.length ? tutItems[0].json : {};\n\nconst nombreEstudiante = est.nombre || tutoria.id_estudiante || 'Desconocido';\nconst correoEstudiante = est.correo || '';\nconst nombreTutor = tut.nombre || tutoria.id_tutor || 'Sin asignar';\n\nconst asunto = `Nueva tutoria agendada: ${tutoria.materia} - ${tutoria.fecha}`;\n\nconst cuerpo = `Se registro una nueva tutoria.\\n\\n` +\n  `Estudiante: ${nombreEstudiante} (${tutoria.id_estudiante})\\n` +\n  (correoEstudiante ? `Correo: ${correoEstudiante}\\n` : '') +\n  `Materia: ${tutoria.materia}\\n` +\n  `Fecha: ${tutoria.fecha}\\n` +\n  `Hora: ${tutoria.hora}\\n` +\n  `Tutor: ${nombreTutor}\\n` +\n  `ID tutoria: ${tutoria.id_tutoria}\\n` +\n  `Estado: ${tutoria.estado}`;\n\nreturn [{ json: { asunto, cuerpo } }];"
+      },
+      "id": "f7558e41-027f-4ff0-9f40-602c9949a536",
+      "name": "Preparar reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "carrillogonzalezbrendanicol@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Notificación de Tutoría</title>\n  <style>\n    body {\n      font-family: 'Segoe UI', Arial, sans-serif;\n      background-color: #f4f6f9;\n      margin: 0;\n      padding: 20px;\n      color: #333333;\n    }\n    .container {\n      max-width: 600px;\n      margin: 0 auto;\n      background-color: #ffffff;\n      border-radius: 8px;\n      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);\n      overflow: hidden;\n    }\n    .header {\n      background-color: #2b6cb0;\n      color: #ffffff;\n      padding: 24px;\n      text-align: center;\n    }\n    .header h1 {\n      margin: 0;\n      font-size: 20px;\n      font-weight: 600;\n    }\n    .content {\n      padding: 24px;\n    }\n    .status-badge {\n      display: inline-block;\n      background-color: #ebf8ff;\n      color: #2b6cb0;\n      padding: 6px 12px;\n      border-radius: 20px;\n      font-size: 13px;\n      font-weight: bold;\n      margin-bottom: 20px;\n    }\n    .details-table {\n      width: 100%;\n      border-collapse: collapse;\n      margin-top: 10px;\n    }\n    .details-table td {\n      padding: 10px;\n      border-bottom: 1px solid #edf2f7;\n    }\n    .details-table td.label {\n      font-weight: bold;\n      color: #4a5568;\n      width: 35%;\n    }\n    .footer {\n      background-color: #f7fafc;\n      padding: 16px;\n      text-align: center;\n      font-size: 12px;\n      color: #a0aec0;\n      border-top: 1px solid #edf2f7;\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>Notificación de Tutoría</h1>\n    </div>\n    \n    <div class=\"content\">\n      <p style=\"font-size: 16px; margin-top: 0;\">\n        Se ha registrado una nueva tutoría en el sistema.\n      </p>\n\n      <table class=\"details-table\">\n        <tr>\n          <td class=\"label\">Estudiante</td>\n          <td>{{estudiante_nombre}} ({{estudiante_id}})</td>\n        </tr>\n        <tr>\n          <td class=\"label\">Correo</td>\n          <td><a href=\"mailto:{{estudiante_correo}}\" style=\"color: #3182ce; text-decoration: none;\">{{estudiante_correo}}</a></td>\n        </tr>\n        <tr>\n          <td class=\"label\">Materia</td>\n          <td>{{materia}}</td>\n        </tr>\n        <tr>\n          <td class=\"label\">Fecha y Hora</td>\n          <td>{{fecha}} - {{hora}}</td>\n        </tr>\n        <tr>\n          <td class=\"label\">Tutor</td>\n          <td>{{tutor_nombre}}</td>\n        </tr>\n        <tr>\n          <td class=\"label\">ID Tutoría</td>\n          <td><strong>{{id_tutoria}}</strong></td>\n        </tr>\n        <tr>\n          <td class=\"label\">Estado</td>\n          <td><span class=\"status-badge\">{{estado}}</span></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"footer\">\n      Este correo fue enviado automáticamente por el sistema de gestión.\n    </div>\n  </div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "315dc473-84c2-48b1-af48-24dc5f458e75",
+      "name": "Enviar reporte a coordinador",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1936,
+        48
+      ],
+      "webhookId": "a1e3c2f0-1111-4a11-9a11-000000000099",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QsQHeRiQtecPubai",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U",
+          "mode": "list",
+          "cachedResultName": "TUTORIAS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "8b1d307d-8242-4982-b797-4ae677dd5f80",
+      "name": "Tutoria actualizada",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        976,
+        352
+      ],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "MoWnnjxiEhAh7AtQ",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "Cancelada",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "b2f4d3a1-2222-4a22-9a22-000000000011"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e5f008e9-aba9-4cb2-bb3c-e1ab2d425379",
+      "name": "Es cancelacion?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "10Z6gE3p1SgCGNWmcfY6meqgbQca4B6PnIEuI4bGp3Jg",
+          "mode": "list",
+          "cachedResultName": "ESTUDIANTES"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_estudiante",
+              "lookupValue": "={{ $json.id_estudiante }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "482c453a-6b41-4d28-9aec-b49f601ace16",
+      "name": "Buscar datos estudiante (cancelacion)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1456,
+        352
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1xFylgAtPyqiMWjmqL89tIAlFAfybAgAOtEwrW2muy6Q",
+          "mode": "list",
+          "cachedResultName": "TUTORES"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_tutor",
+              "lookupValue": "={{ $('Tutoria actualizada').item.json.id_tutor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a206334a-e817-42b5-aec9-0ab99e7ef85a",
+      "name": "Buscar datos tutor (cancelacion)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1696,
+        352
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tutoria = $('Tutoria actualizada').first().json;\nconst estItems = $('Buscar datos estudiante (cancelacion)').all();\nconst tutItems = $('Buscar datos tutor (cancelacion)').all();\n\nconst est = estItems.length ? estItems[0].json : {};\nconst tut = tutItems.length ? tutItems[0].json : {};\n\nconst nombreEstudiante = est.nombre || tutoria.id_estudiante || 'Desconocido';\nconst correoEstudiante = est.correo || '';\nconst nombreTutor = tut.nombre || tutoria.id_tutor || 'Sin asignar';\n\nconst asunto = `Tutoria cancelada: ${tutoria.materia} - ${tutoria.fecha}`;\n\nconst cuerpo = `Se cancelo una tutoria.\\n\\n` +\n  `Estudiante: ${nombreEstudiante} (${tutoria.id_estudiante})\\n` +\n  (correoEstudiante ? `Correo: ${correoEstudiante}\\n` : '') +\n  `Materia: ${tutoria.materia}\\n` +\n  `Fecha: ${tutoria.fecha}\\n` +\n  `Hora: ${tutoria.hora}\\n` +\n  `Tutor: ${nombreTutor}\\n` +\n  `ID tutoria: ${tutoria.id_tutoria}\\n` +\n  `Estado: ${tutoria.estado}`;\n\nreturn [{ json: { asunto, cuerpo } }];"
+      },
+      "id": "09ff6bbb-cf20-45e7-bd3a-0363bacb83ca",
+      "name": "Preparar reporte cancelacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "carrillogonzalezbrendanicol@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Cancelación de Tutoría</title>\n  <style>\n    body {\n      font-family: 'Segoe UI', Arial, sans-serif;\n      background-color: #f4f6f9;\n      margin: 0;\n      padding: 20px;\n      color: #333333;\n    }\n    .container {\n      max-width: 600px;\n      margin: 0 auto;\n      background-color: #ffffff;\n      border-radius: 8px;\n      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);\n      overflow: hidden;\n    }\n    .header {\n      background-color: #c53030;\n      color: #ffffff;\n      padding: 24px;\n      text-align: center;\n    }\n    .header h1 {\n      margin: 0;\n      font-size: 20px;\n      font-weight: 600;\n    }\n    .content {\n      padding: 24px;\n    }\n    .status-badge {\n      display: inline-block;\n      background-color: #fff5f5;\n      color: #c53030;\n      padding: 6px 12px;\n      border-radius: 20px;\n      font-size: 13px;\n      font-weight: bold;\n    }\n    .details-table {\n      width: 100%;\n      border-collapse: collapse;\n      margin-top: 15px;\n    }\n    .details-table td {\n      padding: 10px;\n      border-bottom: 1px solid #edf2f7;\n    }\n    .details-table td.label {\n      font-weight: bold;\n      color: #4a5568;\n      width: 35%;\n    }\n    .footer {\n      background-color: #f7fafc;\n      padding: 16px;\n      text-align: center;\n      font-size: 12px;\n      color: #a0aec0;\n      border-top: 1px solid #edf2f7;\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>Tutoría Cancelada</h1>\n    </div>\n    \n    <div class=\"content\">\n      <p style=\"font-size: 16px; margin-top: 0; color: #2d3748;\">\n        Se ha eliminado / cancelado el registro de la siguiente tutoría:\n      </p>\n\n      <table class=\"details-table\">\n        <tr>\n          <td class=\"label\">Estudiante</td>\n          <td>{{estudiante_nombre}} ({{estudiante_id}})</td>\n        </tr>\n        <tr>\n          <td class=\"label\">Correo</td>\n          <td><a href=\"mailto:{{estudiante_correo}}\" style=\"color: #3182ce; text-decoration: none;\">{{estudiante_correo}}</a></td>\n        </tr>\n        <tr>\n          <td class=\"label\">Materia</td>\n          <td>{{materia}}</td>\n        </tr>\n        <tr>\n          <td class=\"label\">Fecha y Hora</td>\n          <td>{{fecha}} - {{hora}}</td>\n        </tr>\n        <tr>\n          <td class=\"label\">Tutor</td>\n          <td>{{tutor_nombre}}</td>\n        </tr>\n        <tr>\n          <td class=\"label\">ID Tutoría</td>\n          <td><strong>{{id_tutoria}}</strong></td>\n        </tr>\n        <tr>\n          <td class=\"label\">Estado</td>\n          <td><span class=\"status-badge\">{{estado}}</span></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"footer\">\n      Este correo fue enviado automáticamente por el sistema de gestión.\n    </div>\n  </div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "a6e2a241-d3c4-4b8f-963b-adb91be48420",
+      "name": "Enviar reporte cancelacion",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2176,
+        352
+      ],
+      "webhookId": "a1e3c2f0-1111-4a11-9a11-000000000098",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QsQHeRiQtecPubai",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Nueva tutoria agendada": {
+      "main": [
+        [
+          {
+            "node": "Buscar datos estudiante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar datos estudiante": {
+      "main": [
+        [
+          {
+            "node": "Buscar datos tutor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar datos tutor": {
+      "main": [
+        [
+          {
+            "node": "Preparar reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar reporte": {
+      "main": [
+        [
+          {
+            "node": "Enviar reporte a coordinador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tutoria actualizada": {
+      "main": [
+        [
+          {
+            "node": "Es cancelacion?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es cancelacion?": {
+      "main": [
+        [
+          {
+            "node": "Buscar datos estudiante (cancelacion)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar datos estudiante (cancelacion)": {
+      "main": [
+        [
+          {
+            "node": "Buscar datos tutor (cancelacion)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar datos tutor (cancelacion)": {
+      "main": [
+        [
+          {
+            "node": "Preparar reporte cancelacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar reporte cancelacion": {
+      "main": [
+        [
+          {
+            "node": "Enviar reporte cancelacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d8041aff-6ccb-45f2-a534-a91eb61a185b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0fdee32fbf3f702f8400b1cab52551815357ebadadb39538013b96c93e2d0e7f"
+  },
+  "nodeGroups": [],
+  "id": "quYnLAfxG47TIMHl",
+  "tags": []
+}
