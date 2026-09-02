@@ -109,5 +109,4 @@ Solicitada ➔ Asignada ➔ Confirmada ➔ Finalizada
 
 👤 Experiencia de usuario fluida: Interfaz conversacional sin necesidad de manuales.
 
-<img width="1416" height="433" alt="image" src="https://github.com/user-attachments/assets/1d94b946-89d7-49b8-97ee-eaf66230421b" />
 
