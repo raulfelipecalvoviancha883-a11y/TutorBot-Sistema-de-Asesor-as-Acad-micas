@@ -1,0 +1,380 @@
+{
+  "name": "TutorBot - Recordatorios",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "7007c3e1-405f-4f7c-9400-a50bc5f14f38",
+      "name": "Cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1376,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U",
+          "mode": "list",
+          "cachedResultName": "TUTORIAS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "a228effe-d305-4648-a1f5-e8aac3fcf22b",
+      "name": "Leer tutorias activas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1120,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ahora = new Date();\nconst enUnaHora = new Date(ahora.getTime() + 60 * 60 * 1000);\n\nconst items = $input.all().map(i => i.json).filter(t => {\n  if (!['Asignada', 'Confirmada'].includes(t.estado)) return false;\n  if (String(t.recordatorio_enviado).toUpperCase() === 'TRUE') return false;\n  const fechaHora = new Date(`${t.fecha}T${t.hora}:00`);\n  return fechaHora >= ahora && fechaHora <= enUnaHora;\n});\n\nreturn items.map(t => ({ json: t }));\n"
+      },
+      "id": "9576737c-79e9-4cae-aff2-647ee8e5bbfb",
+      "name": "Filtrar proximas sin aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1xFylgAtPyqiMWjmqL89tIAlFAfybAgAOtEwrW2muy6Q",
+          "mode": "list",
+          "cachedResultName": "TUTORES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xFylgAtPyqiMWjmqL89tIAlFAfybAgAOtEwrW2muy6Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xFylgAtPyqiMWjmqL89tIAlFAfybAgAOtEwrW2muy6Q/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_tutor",
+              "lookupValue": "={{ $json.id_tutor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3ffc627-f6b1-432b-924f-43129febf0e7",
+      "name": "Leer datos del tutor",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -608,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Filtrar proximas sin aviso').item.json.id_estudiante }}",
+        "text": "=Recordatorio: tienes una tutoria de {{ $('Filtrar proximas sin aviso').item.json.materia }} hoy a las {{ $('Filtrar proximas sin aviso').item.json.hora }}.",
+        "additionalFields": {}
+      },
+      "id": "fb0c9db7-8d26-49a7-9ee4-4e25616e490f",
+      "name": "Avisar estudiante",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        80
+      ],
+      "webhookId": "a2d7a243-9de3-4d54-97ae-17a143b7f7c1",
+      "credentials": {
+        "telegramApi": {
+          "id": "81sEFwer4aq96lAI",
+          "name": "TutorBot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_tutor }}",
+        "text": "=Recordatorio: tienes una tutoria de {{ $('Filtrar proximas sin aviso').item.json.materia }} hoy a las {{ $('Filtrar proximas sin aviso').item.json.hora }}.",
+        "additionalFields": {}
+      },
+      "id": "5cf141d0-6fdb-43c3-98d1-c07bd5743b93",
+      "name": "Avisar tutor",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        272
+      ],
+      "webhookId": "6ff7c3fb-58b4-46e4-b32a-37466c35cd3a",
+      "credentials": {
+        "telegramApi": {
+          "id": "81sEFwer4aq96lAI",
+          "name": "TutorBot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U",
+          "mode": "list",
+          "cachedResultName": "TUTORIAS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SCnmq4yH3zUKBmDqLxps_1g6hAjN2pqyFptJWuSSX8U/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_tutoria": "={{ $('Filtrar proximas sin aviso').item.json.id_tutoria }}",
+            "recordatorio_enviado": true
+          },
+          "matchingColumns": [
+            "id_tutoria"
+          ],
+          "schema": [
+            {
+              "id": "id_tutoria",
+              "displayName": "id_tutoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "id_estudiante",
+              "displayName": "id_estudiante",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id_tutor",
+              "displayName": "id_tutor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "materia",
+              "displayName": "materia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "hora",
+              "displayName": "hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recordatorio_enviado",
+              "displayName": "recordatorio_enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c39f14e9-1ea7-4acc-a4da-db3878258496",
+      "name": "Marcar recordatorio_enviado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -80,
+        160
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Ne6YkjGfFYiDglLU",
+          "name": "Google Sheets account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Leer tutorias activas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer tutorias activas": {
+      "main": [
+        [
+          {
+            "node": "Filtrar proximas sin aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar proximas sin aviso": {
+      "main": [
+        [
+          {
+            "node": "Leer datos del tutor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer datos del tutor": {
+      "main": [
+        [
+          {
+            "node": "Avisar estudiante",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Avisar tutor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar estudiante": {
+      "main": [
+        [
+          {
+            "node": "Marcar recordatorio_enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar tutor": {
+      "main": [
+        [
+          {
+            "node": "Marcar recordatorio_enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8d7e2baa-6ee0-4527-8118-af380db94d52",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0fdee32fbf3f702f8400b1cab52551815357ebadadb39538013b96c93e2d0e7f"
+  },
+  "nodeGroups": [],
+  "id": "nC06cJ8upVsvYOGd",
+  "tags": []
+}
